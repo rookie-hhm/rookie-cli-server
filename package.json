@@ -1,0 +1,39 @@
+{
+  "name": "node-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon app.js",
+    "devtest": "nodemon apptest.js",
+    "newtest": "nodemon apptest2.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^10.0.0",
+    "koa": "^2.13.1",
+    "koa-body": "^4.2.0",
+    "koa-cors": "^0.0.16",
+    "koa-generic-session": "^2.1.1",
+    "koa-redis": "^4.0.1",
+    "koa-router": "^10.0.0",
+    "koa-socket": "^4.4.0",
+    "koa-socket-2": "^2.0.0",
+    "koa-static": "^5.0.0",
+    "mongoose": "^5.12.11",
+    "ora": "^5.4.1",
+    "redis": "^3.1.2",
+    "simple-git": "^2.45.1",
+    "socket.io": "^3.0.2",
+    "socket.io-client": "^3.0.2",
+    "userhome": "^1.0.0",
+    "ws": "^8.2.2"
+  },
+  "devDependencies": {
+    "flush-promises": "^1.0.2",
+    "nodemon": "^2.0.7"
+  }
+}
