@@ -2,17 +2,20 @@ const { spawnProcess, spinnerStart } = require('../utils/index')
 const userHome = require('userhome')
 const fs = require('fs')
 const fes = require('fs-extra')
-
 const Git = require('simple-git')
 const path = require('path')
+const OSS = require('./oss')
+const glob = require('glob')
 const DEFAULT_CACHE_DIR = '.rookie-cli'
 const DIST_DIR = 'project'
 const COMMAND_NAME = ['npm', 'cnpm']
 const ERR_OK = 0
 const ERR_FAIL = 1
+const REDIS_PREFIX_KEY = 'build'
+const BUILD_DIR_LIST = ['build', 'dist']
 
 class CloudBuildTask {
-  constructor (options, socket) {
+  constructor (options, ctx) {
     // options: 
       // name, 项目名称
       // version 项目版本
@@ -31,8 +34,10 @@ class CloudBuildTask {
     this.branch = branch
     this.buildCommand = buildCommand
     this.git = null
-    this.socket = socket
-    console.log(options, socket)
+    this.ctx = ctx
+    this.socket = ctx.socket
+    this.oss = null // oss存储对象发布到oss上
+    console.log(options)
   }
   isExistsHome () {
     const userHomeDir = userHome()
@@ -116,6 +121,58 @@ class CloudBuildTask {
       childProcess.stdout.on('data', data => {
         this.socket.compress(true).emit('building', data.toString())
       })
+    })
+  }
+  async clear () { // 清空缓存目录及任务数据
+    if (fs.existsSync(this.sourceDir)) {
+      // 删除目录
+      fes.removeSync(this.sourceDir)
+    }
+    this.oss = null // 释放OSS对象
+    const id = this.socket.id
+    console.log(id, 'id')
+    await this.ctx.redis.del(`${REDIS_PREFIX_KEY}:${id}`)
+  }
+  checkPublishDir () { // 检查发布目录是否存在
+    return new Promise((resolve, reject) => {
+      const fileList = BUILD_DIR_LIST.map(dirName => path.resolve(this.sourceDir, dirName))
+      const isExist = fileList.some(path => fs.existsSync(path))
+      if (isExist) {
+        // 确认发布目录存在，实例化OSS对象
+        this.oss = new OSS()
+        resolve()
+      } else {
+        reject(new Error('publish directory not found'))
+      }
+    })
+  }
+  async publish () {
+    return new Promise((resolve, reject) => {
+      const fileList = glob.sync('**', {
+        cwd: path.resolve(this.sourceDir, 'dist'),
+        nodir: true,
+        ignore: ['node_modules']
+      })
+      console.log(fileList, 'fileList')
+      Promise.all(fileList.map(file => {
+        // return new Promise(async (resolve, reject) => {
+        //   try {
+        //     const remotePath = `${this.projectName}/${file}` // test@1.2.3/index.html
+        //     const localPath = path.resolve(this.sourceDir, 'dist', file)
+        //     console.log(remotePath, localPath, 'file-item', )
+        //     await this.oss.upload(remotePath, localPath, {})
+        //     resolve()
+        //   } catch (err) {
+        //     reject(err)
+        //   }
+        // }) 
+        const remotePath = `${this.projectName}/${file}` // test@1.2.3/index.html
+        const localPath = path.resolve(this.sourceDir, 'dist', file)  
+        return this.oss.upload(remotePath, localPath, {})     
+      })).then(() => {
+        console.log("resolve upload")
+        resolve()
+      }).catch((err) => reject(err))
     })
   }
   isValidCommand (command) {
