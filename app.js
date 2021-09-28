@@ -3,17 +3,18 @@ const koaBody = require('koa-body')
 const koaStatic = require("koa-static")
 const koaCors = require('koa-cors')
 const mongoose = require('mongoose')
+const IO = require('koa-socket-2')
+const dotenv = require('dotenv')
+dotenv.config()
 const Redis = require('./classes/redis')
 const redisClient = new Redis()
 const path = require('path')
-const IO = require('koa-socket-2')
 const io = new IO()
 const app = new Koa()
 const registryRoutes = require('./routes/index')
 const REDIS_PREFIX_KEY = 'build'
 const ERR_FAIL = 1
 
-console.log(process.env.MONGO_CONNECTION,'mongooseConfig')
 mongoose.connect(process.env.MONGO_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true }, () => console.log('MongoDB 连接成功了！'))
 mongoose.connection.on('error', console.error)
 
@@ -129,7 +130,7 @@ app.io.on('build', async (ctx, data) => {
     // 发布
     await task.publish()
     // 云发布成功 链接地址返回
-    socket.compress(true).emit('published', 'Cloud publish finished, ')
+    socket.compress(true).emit('published', `Cloud publish finished, https://rookie-cli.oss-cn-shenzhen.aliyuncs.com/${task.projectName}`)
     // 删除相关数据
     task.clear()
     // 发布

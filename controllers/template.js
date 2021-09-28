@@ -1,6 +1,5 @@
 const Template = require('../models/template')
-
-class TemplateInfo {
+class TemplateCtrol {
   async getTemplateInfo (ctx) {
     console.log(ctx.params)
     const { type = '' } = ctx.params
@@ -18,4 +17,4 @@ class TemplateInfo {
   }
 }
 
-module.exports = new TemplateInfo()
+module.exports = new TemplateCtrol()

@@ -103,7 +103,7 @@ class CloudBuildTask {
     return new Promise((resolve, reject) => {
       const isValid = this.isValidCommand(this.buildCommand)
       if (!isValid) {
-        resolve({ code: ERR_FAIL, message: 'Invalid build command, must start with npm/cnpm' })
+        resolve({ code: ERR_FAIL, message: 'Invalid build command, must begin with npm/cnpm' })
       }
       const childProcess = this.execCommand(this.buildCommand, {
         cwd: this.sourceDir,
