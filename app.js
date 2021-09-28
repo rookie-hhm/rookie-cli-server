@@ -1,24 +1,20 @@
 const Koa = require('koa')
 const koaBody = require('koa-body')
-const Router = require('koa-router')
 const koaStatic = require("koa-static")
 const koaCors = require('koa-cors')
 const mongoose = require('mongoose')
 const Redis = require('./classes/redis')
 const redisClient = new Redis()
-console.log(redisClient.set, 'set')
 const path = require('path')
-// const io = require("socket.io")();
 const IO = require('koa-socket-2')
 const io = new IO()
 const app = new Koa()
 const registryRoutes = require('./routes/index')
 const REDIS_PREFIX_KEY = 'build'
-const ERR_OK = 0
 const ERR_FAIL = 1
-const { mongooseConfig } = require('./config');
-console.log(mongooseConfig.connectionStr,'mongooseConfig')
-mongoose.connect(mongooseConfig.connectionStr, { useNewUrlParser: true, useUnifiedTopology: true }, () => console.log('MongoDB 连接成功了！'))
+
+console.log(process.env.MONGO_CONNECTION,'mongooseConfig')
+mongoose.connect(process.env.MONGO_CONNECTION, { useNewUrlParser: true, useUnifiedTopology: true }, () => console.log('MongoDB 连接成功了！'))
 mongoose.connection.on('error', console.error)
 
 io.attach(app)
@@ -69,11 +65,9 @@ async function clone (task, socket) {
     // console.log(code, message, 'clone')
     if (code === ERR_FAIL) {
       socket.compress(true).emit('error_build', message)
-      console.log('reject')
       reject('')
     } else {
       socket.compress(true).emit('building', message)
-      console.log('resolve')
       resolve('')
     }
   })
@@ -86,11 +80,9 @@ async function install (task, socket) {
     if (code === ERR_FAIL) {
       console.log(code )
       socket.compress(true).emit('error_build', message)
-      console.log('reject')
       reject()
     } else {
       socket.compress(true).emit('building', message)
-      console.log('resolve')
       resolve()
     }
   })
@@ -136,8 +128,8 @@ app.io.on('build', async (ctx, data) => {
     await task.checkPublishDir()
     // 发布
     await task.publish()
-    //
-    socket.compress(true).emit('published', 'Cloud publish finished')
+    // 云发布成功 链接地址返回
+    socket.compress(true).emit('published', 'Cloud publish finished, ')
     // 删除相关数据
     task.clear()
     // 发布

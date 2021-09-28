@@ -1,10 +1,11 @@
-const { redisConfig } = require('../config')
 const redis = require('redis')
-
 class Redis {
   constructor () {
-    console.log(redisConfig)
-    this.redisClient = redis.createClient(redisConfig)
+
+    this.redisClient = redis.createClient({
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT
+    })
     this.redisClient.on('connect', () => {
       console.log('redis connected')
     })
